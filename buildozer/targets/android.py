@@ -670,6 +670,9 @@ class TargetAndroid(Target):
 
         # add src files
         self._add_java_src(dist_dir)
+        
+        # add react files
+        self._add_react_src(dist_dir)
 
         # generate the whitelist if needed
         self._generate_whitelist(dist_dir)
@@ -895,6 +898,16 @@ class TargetAndroid(Target):
             for fn in glob(expanduser(pattern.strip())):
                 last_component = basename(fn)
                 self.buildozer.file_copytree(fn, join(src_dir, last_component))
+                
+    def _add_react_src(self, dist_dir):
+        react_src = self.buildozer.config.getlist('app', 'android.react_src', [])
+        react_dir = join(dist_dir, "react")
+        self.buildozer.info(
+                "Copy react files {}".format(react_dir))
+        for pattern in react_src:
+            for fn in glob(expanduser(pattern.strip())):
+                last_component = basename(fn)
+                self.buildozer.file_copytree(fn, join(react_dir, last_component))
 
     @property
     def serials(self):
