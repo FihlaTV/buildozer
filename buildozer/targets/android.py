@@ -906,8 +906,7 @@ class TargetAndroid(Target):
                 "Copy react files {}".format(react_dir))
         for pattern in react_src:
             for fn in glob(expanduser(pattern.strip())):
-                last_component = basename(fn)
-                self.buildozer.file_copytree(fn, join(react_dir, last_component))
+                self.buildozer.file_copytree(fn, react_dir)
 
     @property
     def serials(self):
