@@ -900,13 +900,21 @@ class TargetAndroid(Target):
                 self.buildozer.file_copytree(fn, join(src_dir, last_component))
                 
     def _add_react_src(self, dist_dir):
+        java_src = self.buildozer.config.getlist('app', 'android.add_src', [])
         react_src = self.buildozer.config.getlist('app', 'android.react_src', [])
         react_dir = join(dist_dir, "react")
         self.buildozer.info(
-                "Copy react files {}".format(react_dir))
+            "Copy react files {}".format(react_dir))
         for pattern in react_src:
             for fn in glob(expanduser(pattern.strip())):
                 self.buildozer.file_copytree(fn, react_dir)
+                
+        # copy react bundle files
+        assets_dir = join(dist_dir, "src", "main", "assets")
+        for pattern in java_src:
+            assets_src = join(pattern, "assets")
+            for fn in glob(expanduser(assets_src.strip())):
+                self.buildozer.file_copytree(fn, assets_dir)
 
     @property
     def serials(self):
