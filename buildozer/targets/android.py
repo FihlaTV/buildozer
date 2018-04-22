@@ -915,7 +915,14 @@ class TargetAndroid(Target):
             assets_src = join(pattern, "assets")
             for fn in glob(expanduser(assets_src.strip())):
                 self.buildozer.file_copytree(fn, assets_dir)
-
+                
+        # copy src/main/res too
+        res_dir = join(dist_dir, "src", "main", "res")
+        for pattern in java_src:
+            res_src = join(pattern, "res")
+            for fn in glob(expanduser(res_src.strip())):
+                self.buildozer.file_copytree(fn, res_dir)
+            
     @property
     def serials(self):
         if hasattr(self, '_serials'):
