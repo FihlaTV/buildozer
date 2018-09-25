@@ -111,9 +111,6 @@ class TargetOSX(Target):
 
     def build_package(self):
         self.buildozer.info('Building package')
-        kivy_app_dir = join(
-            self.buildozer.platform_dir,
-            'kivy-sdk-packager-master', 'osx', 'Kivy.app')
 
         bc = self.buildozer.config
         bcg = bc.get
@@ -121,28 +118,30 @@ class TargetOSX(Target):
         package_name = bcg('app', 'package.name')
         domain = bcg('app', 'package.domain')
         title = bcg('app', 'title')
-        app_deps = bcgl('app', 'requirements', '')
-        garden_deps = bcgl('app', 'garden_requirements', '')
+        app_deps = open('requirements.txt').read()
         icon = bc.getdefault('app', 'icon.filename', '')
         version = self.buildozer.get_version()
         author = bc.getdefault('app', 'author', '')
 
-        #print(title, package_name, domain, version,
-        #    source_dir, app_deps, garden_deps, icon, author)
-        #return
-
         self.buildozer.info('Create {}.app'.format(package_name))
         cwd = join(self.buildozer.platform_dir,'kivy-sdk-packager-master', 'osx')
         # remove kivy from app_deps
-        app_deps = ','.join(
-            [word for word in app_deps if 'kivy' not in word])
+        app_deps = [a for a in app_deps.split('\n') if not a.startswith('#') and a not in ['kivy', '']]
+
+        cmd = [
+            'Kivy.app/Contents/Resources/script',
+             '-m', 'pip', 'install',
+             ]
+        cmd.extend(app_deps)
+        check_output(cmd, cwd=cwd)
+
         cmd = [
             'python', 'package_app.py', self.buildozer.app_dir,
             '--appname={}'.format(package_name),
              '--bundlename={}'.format(title),
              '--bundleid={}'.format(domain),
              '--bundleversion={}'.format(version),
-             #'--deps={}'.format(app_deps),
+             #'--deps={}'.format(','.join(app_deps)),
              '--displayname={}'.format(title)
              ]
         if icon:
@@ -151,6 +150,7 @@ class TargetOSX(Target):
             cmd.append('--author={}'.format(author))
 
         check_output(cmd, cwd=cwd)
+
         self.buildozer.info('{}.app created.'.format(package_name))
         self.buildozer.info('Creating {}.dmg'.format(package_name))
         check_output(
@@ -264,3 +264,4 @@ class TargetOSX(Target):
 
 def get_target(buildozer):
     return TargetOSX(buildozer)
+

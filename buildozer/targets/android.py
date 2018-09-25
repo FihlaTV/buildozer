@@ -34,6 +34,7 @@ from shutil import copyfile
 from glob import glob
 
 from buildozer.libs.version import parse
+from distutils.version import LooseVersion
 
 
 class TargetAndroid(Target):
@@ -722,6 +723,11 @@ class TargetAndroid(Target):
                 raise SystemError('Failed to find jar file: {}'.format(
                     pattern))
 
+        # add Java activity
+        add_activities = config.getlist('app', 'android.add_activities', [])
+        for activity in add_activities:
+            build_cmd += [("--add-activity", activity)]
+        
         # add presplash
         presplash = config.getdefault('app', 'presplash.filename', '')
         if presplash:
@@ -771,6 +777,12 @@ class TargetAndroid(Target):
             build_cmd += [("--intent-filters", join(self.buildozer.root_dir,
                                                     intent_filters))]
 
+        # activity launch mode
+        launch_mode = config.getdefault(
+            'app', 'android.manifest.launch_mode', '')
+        if launch_mode:
+            build_cmd += [("--activity-launch-mode", launch_mode)]
+
         # build only in debug right now.
         if self.build_mode == 'debug':
             build_cmd += [("debug", )]
@@ -789,10 +801,13 @@ class TargetAndroid(Target):
             # maybe the hook fail because the apk is not
             pass
 
-        # XXX found how the apk name is really built from the title
+        build_tools_versions = os.listdir(join(self.android_sdk_dir, "build-tools"))
+        build_tools_versions = sorted(build_tools_versions, key=LooseVersion)
+        build_tools_version = build_tools_versions[-1]
         gradle_files = ["build.gradle", "gradle", "gradlew"]
-        is_gradle_build = any((
-            exists(join(dist_dir, x)) for x in gradle_files))
+        is_gradle_build = build_tools_version >= "25.0" and any(
+            (exists(join(dist_dir, x)) for x in gradle_files))
+
         if is_gradle_build:
             # on gradle build, the apk use the package name, and have no version
             packagename = config.get('app', 'package.name')
